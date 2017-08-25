@@ -1,8 +1,8 @@
 /*
-  html2canvas 0.4.1 <http://html2canvas.hertzen.com>
-  Copyright (c) 2013 Niklas von Hertzen
+  <%= pkg.title || pkg.name %> <%= pkg.version %><%= pkg.homepage ? " <" + pkg.homepage + ">" : "" %>
+  Copyright (c) <%= grunt.template.today("yyyy") %> <%= pkg.author.name %>
 
-  Released under MIT License
+  Released under <%= _.pluck(pkg.licenses, "type").join(", ") %> License
 */
 
 (function(window, document, undefined){
@@ -1714,9 +1714,19 @@ _html2canvas.Parse = function (images, options, cb) {
     brh = borderRadius[2][0],
     brv = borderRadius[2][1],
     blh = borderRadius[3][0],
-    blv = borderRadius[3][1],
+    blv = borderRadius[3][1];
 
-    topWidth = width - trh,
+    var halfHeight = Math.floor(height / 2);
+    tlh = tlh > halfHeight ? halfHeight : tlh;
+    tlv = tlv > halfHeight ? halfHeight : tlv;
+    trh = trh > halfHeight ? halfHeight : trh;
+    trv = trv > halfHeight ? halfHeight : trv;
+    brh = brh > halfHeight ? halfHeight : brh;
+    brv = brv > halfHeight ? halfHeight : brv;
+    blh = blh > halfHeight ? halfHeight : blh;
+    blv = blv > halfHeight ? halfHeight : blv;
+
+    var topWidth = width - trh,
     rightHeight = height - brv,
     bottomWidth = width - brh,
     leftHeight = height - blv;
@@ -2824,6 +2834,8 @@ window.html2canvas = function(elements, opts) {
     // render options
     width: null,
     height: null,
+    scale: 1,
+    dpi: null, // dpi overrides scaling factor (scale = dpi / css-inch)
     taintTest: true, // do a taint test with all images before applying to canvas
     renderer: "Canvas"
   };
@@ -2876,6 +2888,7 @@ window.html2canvas.log = _html2canvas.Util.log; // for renderers
 window.html2canvas.Renderer = {
   Canvas: undefined // We are assuming this will be used
 };
+
 _html2canvas.Renderer.Canvas = function(options) {
   options = options || {};
 
@@ -2949,8 +2962,32 @@ _html2canvas.Renderer.Canvas = function(options) {
     fstyle,
     zStack = parsedData.stack;
 
-    canvas.width = canvas.style.width =  options.width || zStack.ctx.width;
-    canvas.height = canvas.style.height = options.height || zStack.ctx.height;
+    var width = options.width || zStack.ctx.width;
+    var height = options.height || zStack.ctx.height;
+
+    var scale;
+    if( options.dpi ) {
+      scale = options.dpi / 96; // 1 CSS inch = 96px.
+    } else {
+      scale = options.scale;
+    }
+    var scaledWidth = Math.floor(width * scale)
+    var scaledHeight = Math.floor(height * scale)
+
+    console.log('width: ' + width);
+    console.log('height: ' + height);
+    console.log('scale: ' + scale);
+    console.log('scaledWidth: ' + scaledWidth);
+    console.log('scaledHeight: ' + scaledHeight);
+
+    // set style dimensions
+    canvas.style.width = width;
+    canvas.style.height = height;
+
+    // set canvas dimensions
+    canvas.width = scaledWidth;
+    canvas.height = scaledHeight;
+    ctx.scale(scale, scale);
 
     fstyle = ctx.fillStyle;
     ctx.fillStyle = (Util.isTransparent(parsedData.backgroundColor) && options.background !== undefined) ? options.background : parsedData.backgroundColor;
@@ -2993,7 +3030,9 @@ _html2canvas.Renderer.Canvas = function(options) {
         newCanvas.height = Math.ceil(bounds.height);
         ctx = newCanvas.getContext("2d");
 
-        ctx.drawImage(canvas, bounds.left, bounds.top, bounds.width, bounds.height, 0, 0, bounds.width, bounds.height);
+		var imgData = canvas.getContext("2d").getImageData(bounds.left, bounds.top, bounds.width, bounds.height);
+		ctx.putImageData(imgData, 0, 0);
+
         canvas = null;
         return newCanvas;
       }
@@ -3002,4 +3041,5 @@ _html2canvas.Renderer.Canvas = function(options) {
     return canvas;
   };
 };
+
 })(window,document);

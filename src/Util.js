@@ -25,6 +25,8 @@ window.html2canvas = function(elements, opts) {
     // render options
     width: null,
     height: null,
+    scale: 1,
+    dpi: null, // dpi overrides scaling factor (scale = dpi / css-inch)
     taintTest: true, // do a taint test with all images before applying to canvas
     renderer: "Canvas"
   };

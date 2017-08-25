@@ -71,8 +71,25 @@ _html2canvas.Renderer.Canvas = function(options) {
     fstyle,
     zStack = parsedData.stack;
 
-    canvas.width = canvas.style.width =  options.width || zStack.ctx.width;
-    canvas.height = canvas.style.height = options.height || zStack.ctx.height;
+    var width = options.width || zStack.ctx.width;
+    var height = options.height || zStack.ctx.height;
+
+    var scale;
+    var CSS_INCH = 96; // pixels per inch
+    if( options.dpi ) {
+      scale = options.dpi / CSS_INCH;
+    } else {
+      scale = options.scale;
+    }
+    var scaledWidth = Math.floor(width * scale);
+    var scaledHeight = Math.floor(height * scale);
+
+    // set dimensions
+    canvas.style.width = width;
+    canvas.style.height = height;
+    canvas.width = scaledWidth;
+    canvas.height = scaledHeight;
+    ctx.scale(scale, scale);
 
     fstyle = ctx.fillStyle;
     ctx.fillStyle = (Util.isTransparent(parsedData.backgroundColor) && options.background !== undefined) ? options.background : parsedData.backgroundColor;
